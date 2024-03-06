@@ -9,12 +9,6 @@ if [[ $(/usr/bin/id -u) -ne 0 ]]; then
     exit
 fi
 
-# source the file multiple times because it wasn't working :3
-. ./functions.sh
-. ./tpmutil.sh
-source ./functions.sh
-source ./tpmutil.sh
-
 version=1
 GITHUB_URL="https://github.com/kxtzownsu/KVS"
 tpmver=$(tpmc tpmver)
@@ -24,8 +18,6 @@ if [ "$tpmver" == "2.0" ]; then
 else
   tpmdaemon="tscd"
 fi
-
-echo $tpmdaemon
 
 # give me thy kernver NOW
 case "$(crossystem tpm_kernver)" in
@@ -49,17 +41,24 @@ esac
 # detect if booted from usb boot or from recovery boot
 if [ "$(crossystem mainfw_type)" == "recovery" ]; then
   source tpmutil.sh
+  source functions
   mkdir /mnt/state &2> /dev/zero
   mount /dev/disk/by-label/KVS /mnt/state
 elif [ "$(crossystem mainfw_type)" == "developer" ]; then
   # panic "non-reco"
-  echo ""
+  clear
+  . ./functions.sh
+  . ./tpmutil.sh
+  source ./functions.sh
+  source ./tpmutil.sh
+  style_text "YOU ARE RUNNING A DEBUG VERSION OF KVS, THIS WAS OPTIMIZED TO RUN ON CHROMEOS ONLY! ALL ACTIONS ARE PURELY VISUAL AND NOT FUNCTIONAL IN THIS MODE!!!"
+  sleep 5
   clear
 fi
 
 credits(){
   echo "KVS: Kernel Version Switcher"
-  echo "V$version"
+  echo "v$version"
   echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
   echo "kxtzownsu - Writing KVS, Providing kernver 0 & kernver 1 files."
   echo "??? - Providing kernver 2 files."
@@ -74,8 +73,11 @@ endkvs(){
 
 
 main(){
+  if [ $() ]
   echo "KVS: Kernel Version Switcher v$version"
   echo "Current kernver: $kernver"
+  echo "TPM Version: $tpmver"
+  echo "TPMD: $tpmdaemon"
   echo "=-=-=-=-=-=-=-=-=-=-"
   echo "1) Set New kernver"
   echo "2) Backup kernver (WIP, Kinda Broken)"
@@ -87,8 +89,6 @@ main(){
 }
 
 
-#while true; do
-#  main
-#done
-
-panic "tpmd-not-killed"
+while true; do
+  main
+done

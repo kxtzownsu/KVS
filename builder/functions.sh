@@ -1,0 +1,21 @@
+#!/bin/bash
+
+COLOR_RESET="\033[0m"
+COLOR_BLACK_B="\033[1;30m"
+COLOR_RED_B="\033[1;31m"
+COLOR_GREEN="\033[0;32m"
+COLOR_GREEN_B="\033[1;32m"
+COLOR_YELLOW="\033[0;33m"
+COLOR_YELLOW_B="\033[1;33m"
+COLOR_BLUE_B="\033[1;34m"
+COLOR_MAGENTA_B="\033[1;35m"
+COLOR_CYAN_B="\033[1;36m"
+
+log(){
+  printf '${COLOR_GREEN}Info: %b${COLOR_RESET}\n' "$*"
+}
+
+error(){
+  printf '${COLOR_RED_B}ERR: &b${COLOR_RESET}\n' "$*"
+  exit 1
+}
