@@ -2,29 +2,49 @@
 
 COLOR_RESET="\033[0m"
 COLOR_BLACK_B="\033[1;30m"
-COLOR_RED="\033[0;31m"
 COLOR_RED_B="\033[1;31m"
 COLOR_GREEN="\033[0;32m"
 COLOR_GREEN_B="\033[1;32m"
 COLOR_YELLOW="\033[0;33m"
 COLOR_YELLOW_B="\033[1;33m"
-COLOR_BLUE="\033[0;34m"
 COLOR_BLUE_B="\033[1;34m"
-COLOR_MAGENTA="\033[0;35m"
 COLOR_MAGENTA_B="\033[1;35m"
-COLOR_CYAN="\033[0;36m"
 COLOR_CYAN_B="\033[1;36m"
 
+<<<<<<< HEAD
 readlink /proc/$$/exe | grep -q bash || error "You MUST execute this with Bash!"
 
+safesync(){
+  sync
+  sleep 0.2
+}
+
+log() {
+  printf "%b\n" "${COLOR_GREEN}Info: $*${COLOR_RESET}"
+}
+
+
+cleanup(){
+  umount "$ROOT_MNT"
+  rm -rf "$ROOT_MNT"
+  
+  umount "$STATE_MNT"
+  rm -rf "$STATE_MNT"
+  
+  umount -R "$LOOPDEV"*
+  
+  losetup -d "$LOOPDEV"
+  losetup -D #in case of cmd above failing
+=======
 log(){
   printf '${COLOR_GREEN}Info: %b${COLOR_RESET}\n' "$*"
+>>>>>>> parent of 0ac565d (start of builder :3)
 }
 
 error(){
-  printf "${COLOR_RED_B}ERR: %b${COLOR_RESET}\n" "$*" >&2 || :
-  printf "${COLOR_RED}Exiting... ${COLOR_RESET}\n" >&2 || :
+  printf '${COLOR_RED_B}ERR: &b${COLOR_RESET}\n' "$*"
   exit 1
+<<<<<<< HEAD
 }
 
 suppress() {
@@ -64,6 +84,7 @@ enable_rw_mount() {
 	if ! is_ext2 "$rootfs" $offset; then
 		echo "enable_rw_mount called on non-ext2 filesystem: $rootfs $offset" 1>&2
 		return 1
+		exit 1
 	fi
 
 	local ro_compat_offset=$((0x464 + 3))
@@ -108,7 +129,9 @@ shrink_partitions() {
   5
   d
   4
-  q
+  d
+  1
+  w
 EOF
 }
 
@@ -118,9 +141,94 @@ truncate_image() {
 	local final_sector=$(get_final_sector "$1")
 	local end_bytes=$(((final_sector + buffer) * sector_size))
 
-	log_info "Truncating image to $(format_bytes "$end_bytes")"
+	log "Truncating image to $(format_bytes "$end_bytes")"
 	truncate -s "$end_bytes" "$1"
 
 	# recreate backup gpt table/header
 	suppress sgdisk -e "$1" 2>&1 | sed 's/\a//g'
 }
+
+format_bytes() {
+	numfmt --to=iec-i --suffix=B "$@"
+}
+
+
+create_stateful(){
+  log "Creating KVS/Stateful Partition"
+  local final_sector=$(get_final_sector "$LOOPDEV")
+  local sector_size=$(get_sector_size "$LOOPDEV")
+  
+  echo $final_sector
+  echo $sector_size
+  
+  # special UUID is from grunt shim, dunno if this is different on other shims
+  cgpt add "$LOOPDEV" -i 1 -b "$STATE_START" -s $((STATE_SIZE / sector_size)) -t "9CC433E4-52DB-1F45-A951-316373C30605"
+  partx -u -n 1 "$LOOPDEV"
+  suppress mkfs.ext4 -F -L KVS "$LOOPDEV"p1
+  safesync
+}
+
+inject_stateful(){
+  log "Injecting KVS/STateful Partition"
+  
+  echo "Mounting stateful.."
+  mount "$LOOPDEV"p1 "$STATE_MNT"
+  echo "Copying files.."
+  cp -r $SCRIPT_DIR/stateful/* "$STATE_MNT"
+  umount "$STATE_MNT"
+}
+
+shrink_root() {
+  log "Shrinking ROOT-A Partition"
+
+	enable_rw_mount "${LOOPDEV}p3"
+	suppress e2fsck -fy "${LOOPDEV}p3"
+	suppress resize2fs -M "${LOOPDEV}p3"
+	disable_rw_mount "${LOOPDEV}p3"
+
+	local sector_size=$(get_sector_size "$LOOPDEV")
+	local block_size=$(tune2fs -l "${LOOPDEV}p3" | grep "Block size" | awk '{print $3}')
+	local block_count=$(tune2fs -l "${LOOPDEV}p3" | grep "Block count" | awk '{print $3}')
+
+	local original_sectors=$(cgpt show -i 3 -s -n -q "$LOOPDEV")
+	local original_bytes=$((original_sectors * sector_size))
+
+	local resized_bytes=$((block_count * block_size))
+	local resized_sectors=$((resized_bytes / sector_size))
+
+	echo "Resizing ROOT from $(format_bytes ${original_bytes}) to $(format_bytes ${resized_bytes})"
+	cgpt add -i 3 -s "$resized_sectors" "$LOOPDEV"
+	partx -u -n 3 "$LOOPDEV"
+	echo "Done shrinking root."
+}
+
+inject_root(){
+  log "Injecting ROOT-A Partition"
+  
+  echo "Mounting root.."
+  enable_rw_mount "$LOOPDEV"p3
+  mount "$LOOPDEV"p3 "$ROOT_MNT"
+  echo "Copying files.."
+  cp -r "$SCRIPT_DIR"/root/* "$ROOT_MNT"
+  umount "$ROOT_MNT"
+}
+
+get_parts_physical_order() {
+	local part_table=$(cgpt show -q "$1")
+	local physical_parts=$(awk '{print $1}' <<<"$part_table" | sort -n)
+	for part in $physical_parts; do
+		grep "^\s*${part}\s" <<<"$part_table" | awk '{print $3}'
+	done
+}
+
+squash_partitions() {
+	log "Squashing partitions"
+
+	for part in $(get_parts_physical_order "$1"); do
+		echo "Squashing ${1}p${part}"
+		suppress sfdisk -N "$part" --move-data "$1" <<<"+,-" || :
+	done
+}
+=======
+}
+>>>>>>> parent of 0ac565d (start of builder :3)

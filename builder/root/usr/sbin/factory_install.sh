@@ -40,13 +40,14 @@ esac
 
 # detect if booted from usb boot or from recovery boot
 if [ "$(crossystem mainfw_type)" == "recovery" ]; then
-  source tpmutil.sh
-  source functions
+  source /usr/sbin/kvs/tpmutil.sh
+  source /usr/share/kvs/functions.sh
   mkdir /mnt/state &2> /dev/zero
   mount /dev/disk/by-label/KVS /mnt/state
 elif [ "$(crossystem mainfw_type)" == "developer" ]; then
-  # panic "non-reco"
+  panic "non-reco"
   clear
+  sleep infinity
   . ./functions.sh
   . ./tpmutil.sh
   source ./functions.sh
