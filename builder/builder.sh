@@ -29,6 +29,8 @@ echo "some of this builder would have been impossible without it, at least with 
 echo "Press ENTER to continue, CTRL+C to quit"
 read -r
 
+sfdisk -d "$IMG" > pre-mod.txt
+
 #we need this before we re-create stateful
 STATE_START=$(cgpt show "$IMG" | grep "STATE" | awk '{print $1}')
 shrink_partitions "$IMG"
@@ -40,6 +42,9 @@ fdisk -l "$LOOPDEV"
 fdisk "$LOOPDEV" <<EOF
 w
 EOF
+
+inject_root
+safesync
 
 shrink_root
 safesync
@@ -53,21 +58,19 @@ safesync
 inject_stateful
 safesync
 
-inject_root
-safesync
-
 cleanup
 safesync
 
 log "pre-truncate"
 fdisk -l "$IMG"
+sfdisk -d "$IMG" > pre-truncate.txt
 
 truncate_image "$IMG"
 safesync
 
 log "post-truncate"
 fdisk -l "$IMG"
-
+sfdisk -d "$IMG" > post-truncate.txt
 
 log "Done building!"
 
