@@ -2,16 +2,19 @@
 
 COLOR_RESET="\033[0m"
 COLOR_BLACK_B="\033[1;30m"
+COLOR_RED="\033[0;31m"
 COLOR_RED_B="\033[1;31m"
 COLOR_GREEN="\033[0;32m"
 COLOR_GREEN_B="\033[1;32m"
 COLOR_YELLOW="\033[0;33m"
 COLOR_YELLOW_B="\033[1;33m"
+COLOR_BLUE="\033[0;34m"
 COLOR_BLUE_B="\033[1;34m"
+COLOR_MAGENTA="\033[0;35m"
 COLOR_MAGENTA_B="\033[1;35m"
+COLOR_CYAN="\033[0;36m"
 COLOR_CYAN_B="\033[1;36m"
 
-<<<<<<< HEAD
 readlink /proc/$$/exe | grep -q bash || error "You MUST execute this with Bash!"
 
 safesync(){
@@ -35,16 +38,12 @@ cleanup(){
   
   losetup -d "$LOOPDEV"
   losetup -D #in case of cmd above failing
-=======
-log(){
-  printf '${COLOR_GREEN}Info: %b${COLOR_RESET}\n' "$*"
->>>>>>> parent of 0ac565d (start of builder :3)
 }
 
 error(){
-  printf '${COLOR_RED_B}ERR: &b${COLOR_RESET}\n' "$*"
+  printf "${COLOR_RED_B}ERR: %b${COLOR_RESET}\n" "$*" >&2 || :
+  printf "${COLOR_RED}Exiting... ${COLOR_RESET}\n" >&2 || :
   exit 1
-<<<<<<< HEAD
 }
 
 suppress() {
@@ -229,6 +228,3 @@ squash_partitions() {
 		suppress sfdisk -N "$part" --move-data "$1" <<<"+,-" || :
 	done
 }
-=======
-}
->>>>>>> parent of 0ac565d (start of builder :3)
