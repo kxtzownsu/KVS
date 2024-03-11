@@ -69,7 +69,7 @@ credits(){
   echo "TPMD: $tpmdaemon"
   echo "-=-=-=-=-=-=-=-=-=-=-"
   echo "kxtzownsu - Writing KVS, Providing kernver 0 & kernver 1 files."
-  echo "crossystem - Providing kernver 2 files."
+  echo "planetearth1363 - Providing kernver 2 files."
   echo "miimaker - Providing kernver 3 files."
   echo "OlyB - Helping me figure out the shim builder, seriously, thanks."
   echo "Google - Writing the 'tpmc' command :3"
