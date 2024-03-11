@@ -163,7 +163,7 @@ create_stateful(){
 }
 
 inject_stateful(){
-  log "Injecting KVS/STateful Partition"
+  log "Injecting KVS/Stateful Partition"
   
   echo "Mounting stateful.."
   mount "$LOOPDEV"p1 "$STATE_MNT"
