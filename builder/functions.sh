@@ -23,18 +23,18 @@ safesync(){
 }
 
 log() {
-  printf "%b\n" "${COLOR_GREEN}Info: $*${COLOR_RESET}"
+  printf "%b\n" "${COLOR_BLUE_B}Info: $*${COLOR_RESET}"
 }
 
 
 cleanup(){
-  umount "$ROOT_MNT"
+  suppress umount "$ROOT_MNT"
   rm -rf "$ROOT_MNT"
   
-  umount "$STATE_MNT"
+  suppress umount "$STATE_MNT"
   rm -rf "$STATE_MNT"
   
-  umount -R "$LOOPDEV"*
+  suppress umount -R "$LOOPDEV"*
   
   losetup -d "$LOOPDEV"
   losetup -D #in case of cmd above failing
@@ -55,11 +55,11 @@ suppress() {
 }
 
 get_sector_size() {
-	fdisk -l "$1" | grep "Sector size" | awk '{print $4}'
+	"$SFDISK" -l "$1" | grep "Sector size" | awk '{print $4}'
 }
 
 get_final_sector() {
-	fdisk -l -o end "$1" | grep "^\s*[0-9]" | awk '{print $1}' | sort -nr | head -n 1
+	"$SFDISK" -l -o end "$1" | grep "^\s*[0-9]" | awk '{print $1}' | sort -nr | head -n 1
 }
 
 is_ext2() {
@@ -83,7 +83,6 @@ enable_rw_mount() {
 	if ! is_ext2 "$rootfs" $offset; then
 		echo "enable_rw_mount called on non-ext2 filesystem: $rootfs $offset" 1>&2
 		return 1
-		exit 1
 	fi
 
 	local ro_compat_offset=$((0x464 + 3))
@@ -136,7 +135,7 @@ EOF
 
 truncate_image() {
 	local buffer=35
-	local sector_size=$(fdisk -l "$1" | grep "Sector size" | awk '{print $4}')
+	local sector_size=$("$SFDISK" -l "$1" | grep "Sector size" | awk '{print $4}')
 	local final_sector=$(get_final_sector "$1")
 	local end_bytes=$(((final_sector + buffer) * sector_size))
 
@@ -156,12 +155,8 @@ create_stateful(){
   log "Creating KVS/Stateful Partition"
   local final_sector=$(get_final_sector "$LOOPDEV")
   local sector_size=$(get_sector_size "$LOOPDEV")
-  
-  echo $final_sector
-  echo $sector_size
-  
   # special UUID is from grunt shim, dunno if this is different on other shims
-  cgpt add "$LOOPDEV" -i 1 -b "$STATE_START" -s $((STATE_SIZE / sector_size)) -t "9CC433E4-52DB-1F45-A951-316373C30605"
+  "$CGPT" add "$LOOPDEV" -i 1 -b $((final_sector + 1)) -s $((STATE_SIZE / sector_size)) -t "9CC433E4-52DB-1F45-A951-316373C30605"
   partx -u -n 1 "$LOOPDEV"
   suppress mkfs.ext4 -F -L KVS "$LOOPDEV"p1
   safesync
@@ -189,31 +184,31 @@ shrink_root() {
 	local block_size=$(tune2fs -l "${LOOPDEV}p3" | grep "Block size" | awk '{print $3}')
 	local block_count=$(tune2fs -l "${LOOPDEV}p3" | grep "Block count" | awk '{print $3}')
 
-	local original_sectors=$(cgpt show -i 3 -s -n -q "$LOOPDEV")
+	local original_sectors=$("$CGPT" show -i 3 -s -n -q "$LOOPDEV")
 	local original_bytes=$((original_sectors * sector_size))
 
 	local resized_bytes=$((block_count * block_size))
 	local resized_sectors=$((resized_bytes / sector_size))
 
 	echo "Resizing ROOT from $(format_bytes ${original_bytes}) to $(format_bytes ${resized_bytes})"
-	cgpt add -i 3 -s "$resized_sectors" "$LOOPDEV"
+	"$CGPT" add -i 3 -s "$resized_sectors" "$LOOPDEV"
 	partx -u -n 3 "$LOOPDEV"
-	echo "Done shrinking root."
 }
 
 inject_root(){
   log "Injecting ROOT-A Partition"
   
   echo "Mounting root.."
-  enable_rw_mount "$LOOPDEV"p3
-  mount "$LOOPDEV"p3 "$ROOT_MNT"
+  suppress enable_rw_mount "$LOOPDEV"p3
+  suppress mount "$LOOPDEV"p3 "$ROOT_MNT"
   echo "Copying files.."
-  cp -r "$SCRIPT_DIR"/root/* "$ROOT_MNT"
-  umount "$ROOT_MNT"
+  suppress cp -r "$SCRIPT_DIR"/root/* "$ROOT_MNT"
+  echo "$(date +'%m-%d-%Y %I:%M%p %Z')" > "$ROOT_MNT"/DATE_COMPILED
+  suppress umount "$ROOT_MNT"
 }
 
 get_parts_physical_order() {
-	local part_table=$(cgpt show -q "$1")
+	local part_table=$("$CGPT" show -q "$1")
 	local physical_parts=$(awk '{print $1}' <<<"$part_table" | sort -n)
 	for part in $physical_parts; do
 		grep "^\s*${part}\s" <<<"$part_table" | awk '{print $3}'
@@ -225,6 +220,10 @@ squash_partitions() {
 
 	for part in $(get_parts_physical_order "$1"); do
 		echo "Squashing ${1}p${part}"
-		suppress sfdisk -N "$part" --move-data "$1" <<<"+,-" || :
+		suppress "$SFDISK" -N "$part" --move-data "$1" <<<"+,-" || :
 	done
+}
+
+umount_all(){
+  suppress umount -R "$LOOPDEV"*
 }

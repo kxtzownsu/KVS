@@ -99,19 +99,32 @@ selection(){
       case $kernver in
         "0")
           echo "Setting kernver 0"
-          write_tpm 0x1008 $(cat /mnt/realstate/kvs/kernver0)
+          write_kernver $(cat /mnt/state/kvs/kernver0)
+          sleep 2
+          echo "Finished writing kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
         "1")
           echo "Setting kernver 1"
-          write_tpm 0x1008 $(cat /mnt/realstate/kvs/kernver1)
+          write_kernver $(cat /mnt/state/kvs/kernver1)
+          echo "Finished writing kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
         "2")
           echo "Setting kernver 2"
-          write_tpm 0x1008 $(cat /mnt/realstate/kvs/kernver2)
+          write_kernver $(cat /mnt/state/kvs/kernver2)
+          echo "Finished writing kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
         "3")
           echo "Setting kernver 3"
-          write_tpm 0x1008 $(cat /mnt/realstate/kvs/kernver3)
+          write_kernver $(cat /mnt/state/kvs/kernver3)
+          echo "Finished writing kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
         *)
           echo "Invalid kernver. Please check your input."
@@ -119,36 +132,82 @@ selection(){
           ;;
       esac ;;
     "2")
-      case $currentkernver in
-        "0x00000000")
+      case $kernver in
+        "0")
           echo "Current kernver: 0"
           echo "Outputting to stateful/kernver-out"
-          cp /mnt/realstate/kvs/kernver0 /mnt/state/kernver-out
+          cp /mnt/state/kvs/raw/kernver0.raw /mnt/state/kernver-out
+          echo "Finished saving kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
-        "0x00010001")
+        "1")
           echo "Current kernver: 1"
           echo "Outputting to stateful/kernver-out"
-          cp /mnt/realstate/kvs/kernver1 /mnt/state/kernver-out
+          cp /mnt/state/kvs/raw/kernver1.raw /mnt/state/kernver-out
+          echo "Finished saving kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
-        "0x00010002")
+        "2")
           echo "Current kernver: 2"
           echo "Outputting to stateful/kernver-out"
-          cp /mnt/realstate/kvs/kernver2 /mnt/state/kernver-out
+          cp /mnt/state/kvs/raw/kernver2.raw /mnt/state/kernver-out
+          echo "Finished saving kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
-        "0x00010003")
+        "3")
           echo "Current kernver: 3"
           echo "Outputting to stateful/kernver-out"
-          cp /mnt/realstate/kvs/kernver3 /mnt/state/kernver-out
+          cp /mnt/state/kvs/raw/kernver3.raw /mnt/state/kernver-out
+          echo "Finished saving kernver $kernver!"
+          echo "Press ENTER to return to main menu.."
+          read -r
           ;;
         *)
           panic "invalid-kernver"
           ;;
       esac ;;
     "3")
-      credits
+      bash
       ;;
     "4")
+      credits
+      ;;
+    "5")
       endkvs
       ;;
+    "6")
+      clear
+      style_text "silly debug menu!!"
+      echo "panic menu"
+      echo "1) invalid-kernver"
+      echo "2) mount-error"
+      echo "3) non-reco"
+      echo "4) tpmd-not-killed"
+      echo "5) return to menu"
+      read -rep "> " panicsel
+      
+      case $panicsel in
+        "1")
+          panic "invalid-kernver"
+          ;;
+        "2")
+          panic "mount-error"
+          ;;
+        "3")
+          panic "non-reco"
+          ;;
+        "4")
+          panic "tpmc-not-killed"
+          ;;
+        "5")
+          echo ""
+          ;;
+        "*")
+          echo "invalid option, wat the flip!!!"
+          ;;
+      esac ;;
   esac
 }

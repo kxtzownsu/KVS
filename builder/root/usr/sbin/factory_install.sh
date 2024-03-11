@@ -40,31 +40,42 @@ esac
 
 # detect if booted from usb boot or from recovery boot
 if [ "$(crossystem mainfw_type)" == "recovery" ]; then
-  source /usr/sbin/kvs/tpmutil.sh
+  source /usr/share/kvs/tpmutil.sh
   source /usr/share/kvs/functions.sh
-  mkdir /mnt/state &2> /dev/zero
+  mkdir -p /mnt/state &2>1 /dev/null
   mount /dev/disk/by-label/KVS /mnt/state
-elif [ "$(crossystem mainfw_type)" == "developer" ]; then
-  panic "non-reco"
+  stop $tpmdaemon
   clear
-  sleep infinity
-  . ./functions.sh
-  . ./tpmutil.sh
-  source ./functions.sh
-  source ./tpmutil.sh
+elif [ "$(crossystem mainfw_type)" == "developer" ]; then
+  source /usr/sbin/kvs/tpmutil.sh
+  source /usr/sbin/kvs/functions.sh
+  # panic "non-reco"
+  # sleep infinity
+  clear
+  . ../share/kvs/functions.sh
+  . ../share/kvs/tpmutil.sh
+  source ../share/kvs/functions.sh
+  source ../share/kvs/tpmutil.sh
   style_text "YOU ARE RUNNING A DEBUG VERSION OF KVS, THIS WAS OPTIMIZED TO RUN ON CHROMEOS ONLY! ALL ACTIONS ARE PURELY VISUAL AND NOT FUNCTIONAL IN THIS MODE!!!"
   sleep 5
   clear
 fi
 
 credits(){
-  echo "KVS: Kernel Version Switcher"
-  echo "v$version"
-  echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+  clear
+  echo "KVS: Kernel Version Switcher v$version"
+  echo "Current kernver: $kernver"
+  echo "TPM Version: $tpmver"
+  echo "TPMD: $tpmdaemon"
+  echo "-=-=-=-=-=-=-=-=-=-=-"
   echo "kxtzownsu - Writing KVS, Providing kernver 0 & kernver 1 files."
-  echo "??? - Providing kernver 2 files."
-  echo "TBD - Providing kernver 3 files."
-  echo "Google - Writing the `tpmc` command :3"
+  echo "crossystem - Providing kernver 2 files."
+  echo "miimaker - Providing kernver 3 files."
+  echo "OlyB - Helping me figure out the shim builder, seriously, thanks."
+  echo "Google - Writing the 'tpmc' command :3"
+  echo "-=-=-=-=-=-=-=-=-=-=-"
+  echo "Press ENTER to return to the main menu"
+  read -r
 }
 
 endkvs(){
@@ -74,22 +85,24 @@ endkvs(){
 
 
 main(){
-  if [ $() ]
   echo "KVS: Kernel Version Switcher v$version"
   echo "Current kernver: $kernver"
   echo "TPM Version: $tpmver"
   echo "TPMD: $tpmdaemon"
-  echo "=-=-=-=-=-=-=-=-=-=-"
+  echo "-=-=-=-=-=-=-=-=-=-=-"
   echo "1) Set New kernver"
-  echo "2) Backup kernver (WIP, Kinda Broken)"
-  echo "3) Credits"
-  echo "4) Exit"
-  read -rep "> " sel
+  echo "2) Backup kernver"
+  echo "3) Bash Shell"
+  echo "4) Credits"
+  echo "5) Exit"
+  printf '\x1b[?25h'
+  read -rep "$(printf '\x1b[?25h')> " sel
   
   selection $sel
 }
 
 
 while true; do
+  clear
   main
 done
