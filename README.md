@@ -25,4 +25,4 @@ After flashing KVS to a RAW shim, download & open the [Chrome Recovery Utility](
 <br />
 Press the Settings (⚙️) icon in the top right, and press "Use Local Image". Select your built KVS shim, and then select your target USB / SD.
 
-After it is done flashing, go to your target chromebook, press 
+After it is done flashing, go to your target chromebook and enter developer mode. Then plug in the KVS drive and press ESC+REFRESH+POWER to boot the shim.
