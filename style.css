@@ -13,6 +13,14 @@ body {
   min-height: 100vh;
 }
 
+a {
+  color: #F7A6E8;
+}
+
+a:visited {
+  color: #B0A6F7;
+}
+
 code {
   background-color: #11111b;
   color: #a6e3a1;
