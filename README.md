@@ -1,3 +1,7 @@
+>[!IMPORTANT]
+>KVS is DEPRECATED! This was my first real project, and while I'm happy people were able to benefit from this, it's code is old and honestly bad.
+>If you need to revert to KV1 (Kernel Version 1), boot [SH1mmer](https://github.com/MercuryWorkshop/sh1mmer) and use the "Reset kernel rollback version" payload.
+
 # kvs
 KVS: Kernel Version Switcher (anti-rollback rollbacker)
 <br>
